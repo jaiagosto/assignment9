@@ -1,0 +1,78 @@
+# docker-compose.yml
+# Assignment 9: FastAPI + PostgreSQL + pgAdmin setup
+
+version: '3.8'
+
+services:
+  # FastAPI web application
+  web:
+    build: .
+    container_name: fastapi_calculator
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      # Database connection string for PostgreSQL
+      - DATABASE_URL=postgresql://postgres:password@db:5432/fastapi_db
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # PostgreSQL database
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    environment:
+      # Database credentials - match these in pgAdmin
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: fastapi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist database data so it doesn't get lost when container stops
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # Check if database is ready
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  # pgAdmin - web interface for managing PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      # Login credentials for pgAdmin web interface
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      # Persist pgAdmin settings
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - app_network
+
+# Named volumes to persist data
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# Network for containers to communicate
+networks:
+  app_network:
+    driver: bridge
