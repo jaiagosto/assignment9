@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculator App</title>
+    <style>
+        /* Basic styling for the page */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        
+        .calculator {
+            margin-top: 30px;
+        }
+        
+        input {
+            margin: 5px;
+            padding: 5px;
+        }
+        
+        button {
+            padding: 5px 10px;
+        }
+        
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hello World</h1>
+    
+    <div class="calculator">
+        <h2>Calculator</h2>
+        
+        <!-- Input fields for the two numbers -->
+        <input type="number" id="a" placeholder="First number">
+        <input type="number" id="b" placeholder="Second number"><br>
+        
+        <!-- Buttons for each operation -->
+        <button onclick="calculate('add')">Add</button>
+        <button onclick="calculate('subtract')">Subtract</button>
+        <button onclick="calculate('multiply')">Multiply</button>
+        <button onclick="calculate('divide')">Divide</button>
+        
+        <!-- Area to display the result -->
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        // Function to perform calculations by calling the API
+        async function calculate(operation) {
+            // Get the input values from the page
+            const a = parseFloat(document.getElementById('a').value);
+            const b = parseFloat(document.getElementById('b').value);
+            const resultElement = document.getElementById('result');
+    
+            try {
+                // Send a POST request to the appropriate endpoint
+                const response = await fetch('/' + operation, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ a: a, b: b })
+                });
+                
+                // Parse the response as JSON
+                const data = await response.json();
+                
+                // Log to console for debugging
+                console.log('Response Status:', response.status);
+                console.log('Response Data:', data);
+                
+                if (response.ok) {
+                    // If successful, show the result
+                    resultElement.innerText = 'Calculation Result: ' + data.result;
+                } else {
+                    // If there's an error, show the error message
+                    resultElement.innerText = 'Error: ' + data.error;
+                }
+            } catch (error) {
+                // Handle any network errors
+                console.error('Fetch error:', error);
+                resultElement.innerText = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
